@@ -1,5 +1,6 @@
 package service;
 
+import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +18,26 @@ public class UserServiceImpl implements UserService {
 	
 	@Override
 	public void register(String username, String email, String password) {
-		// TODO Auto-generated method stub
+		logger.info("Registration of user: {}", email);
 		
+		if (username == null || email == null || password == null) {
+		    throw new IllegalArgumentException("Username, email and password must not be null");
+		}
+		
+		if (userRepository.findByEmail(email) != null) {
+            logger.warn("Attempt to register with an existing email address: {}", email);
+            throw new IllegalArgumentException("Email already exists");
+        }
+		
+		String hPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+		User user = new User();
+		user.setEmail(email);
+		user.setUsername(username);
+		user.setPassword(hPassword);	
+		
+		userRepository.save(user);
+		
+		logger.info("User {} registered successfully" ,email);
 	}
 
 	@Override
