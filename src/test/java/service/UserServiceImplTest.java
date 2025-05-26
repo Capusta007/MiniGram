@@ -80,7 +80,7 @@ class UserServiceImplTest {
 
 		when(userRepository.findByEmail(email)).thenReturn(mockUser);
 
-		User loggedUser = userService.login(email, hPassword);
+		User loggedUser = userService.login(email, password);
 
 		assertEquals(email, loggedUser.getEmail());
 		assertTrue(BCrypt.checkpw(password, loggedUser.getPassword()));
