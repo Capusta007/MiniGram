@@ -89,22 +89,75 @@ public class UserServiceImpl implements UserService {
 		return user;
 	}
 
+	/**
+	 * Finds a user by their ID.
+	 *
+	 * @param id the ID of the user
+	 * @return the user with the given ID, or {@code null} if not found
+	 */
 	@Override
 	public User getById(Long id) {
-		// TODO Auto-generated method stub
-		return null;
+		return userRepository.findById(id);
 	}
 
+	/**
+	 * Changes the password of a user with the given {@code userId}.
+	 *
+	 * @param userId      the ID of the user whose password is to be changed
+	 * @param oldPassword the current password provided by the user
+	 * @param newPassword the new password to set
+	 * @throws IllegalArgumentException if the user doesn't exist, if the old
+	 *                                  password is incorrect or if one of
+	 *                                  {@code String} params is null
+	 */
 	@Override
 	public void changePassword(Long userId, String oldPassword, String newPassword) {
-		// TODO Auto-generated method stub
+		User user = userRepository.findById(userId);
+		if (user == null) {
+			throw new IllegalArgumentException("No user with such id");
+		}
 
+		if (oldPassword == null || newPassword == null) {
+			throw new IllegalArgumentException("oldPassword and newPassword must not be null");
+		}
+
+		if (!BCrypt.checkpw(oldPassword, user.getPassword())) {
+			logger.warn("User: {} entered wrong password", user.getEmail());
+			throw new IllegalArgumentException("Wrong password");
+		}
+
+		String hPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+		user.setPassword(hPassword);
+		userRepository.update(user);
+		
+		logger.info("User {} changed password", user.getEmail());
 	}
 
+	/**
+	 * Deletes the user with the given {@code userId}, only if the provided {@code password}
+	 * matches the current password of the user.
+	 *
+	 * @param userId   the ID of the user to delete
+	 * @param password the current password for confirmation
+	 * @throws IllegalArgumentException if the password is incorrect or user does not exist
+	 */
 	@Override
 	public void deleteUser(Long userId, String password) {
-		// TODO Auto-generated method stub
+		User user = userRepository.findById(userId);
+		
+		if(user == null) {
+			throw new IllegalArgumentException("No user with such id");
+		}
+		
+		if(!BCrypt.checkpw(password, user.getPassword())) {
+			logger.warn("Wrong password while deleting user {}", user.getEmail());
+			throw new IllegalArgumentException("Wrong password");
+		}
 
+		String email = user.getEmail();
+		userRepository.delete(user);
+		
+		logger.info("User {} has been deleted", email);
 	}
 
 }
