@@ -67,4 +67,58 @@ class UserServiceImplTest {
 		// ensure save не вызывается
 		verify(userRepository, never()).save(any(User.class));
 	}
+
+	@Test
+	void testLoginEmailExists() {
+		String email = "test@example.com";
+		String password = "password123";
+		String hPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+
+		User mockUser = new User();
+		mockUser.setEmail(email);
+		mockUser.setPassword(hPassword);
+
+		when(userRepository.findByEmail(email)).thenReturn(mockUser);
+
+		User loggedUser = userService.login(email, hPassword);
+
+		assertEquals(email, loggedUser.getEmail());
+		assertTrue(BCrypt.checkpw(password, loggedUser.getPassword()));
+	}
+
+	@Test
+	void testLoginWrongPassword() {
+		String email = "test@example.com";
+		String correctPassword = "correct123";
+		String wrongPassword = "wrong123";
+
+		// Захешированный правильный пароль
+		String hashedPassword = BCrypt.hashpw(correctPassword, BCrypt.gensalt());
+
+		// Возвращаем пользователя с правильным хешем
+		User mockUser = new User();
+		mockUser.setEmail(email);
+		mockUser.setPassword(hashedPassword);
+
+		when(userRepository.findByEmail(email)).thenReturn(mockUser);
+
+		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+				() -> userService.login(email, wrongPassword));
+
+		assertEquals("Wrong password", exception.getMessage());
+	}
+
+	@Test
+	void testLoginUserNotRegistered() {
+		String email = "notfound@example.com";
+		String password = "somepassword";
+
+		// эмулируем, что пользователь не найден
+		when(userRepository.findByEmail(email)).thenReturn(null);
+
+		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+				() -> userService.login(email, password));
+
+		assertEquals("User are not registered", exception.getMessage());
+	}
 }
