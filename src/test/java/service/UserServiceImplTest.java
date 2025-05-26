@@ -1,6 +1,5 @@
 package service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,54 +20,51 @@ import model.User;
 class UserServiceImplTest {
 
 	private static UserRepository userRepository;
-    private static UserServiceImpl userService;
+	private static UserServiceImpl userService;
 
 	@BeforeAll
-    static void setUp() {
-        userRepository = mock(UserRepository.class); // create mock
-        userService = new UserServiceImpl(userRepository); // transfer mock
-    }
+	static void setUp() {
+		userRepository = mock(UserRepository.class); // create mock
+		userService = new UserServiceImpl(userRepository); // transfer mock
+	}
 
 	@Test
-    void testRegisterSuccess() {
-        String email = "test@example.com";
-        String username = "testuser";
-        String password = "password123";
+	void testRegisterSuccess() {
+		String email = "test@example.com";
+		String username = "testuser";
+		String password = "password123";
 
-        // user with such email does not found
-        when(userRepository.findByEmail(email)).thenReturn(null);
+		// user with such email does not found
+		when(userRepository.findByEmail(email)).thenReturn(null);
 
-        // захватываем user, который будет сохранён
-        doAnswer(invocation -> {
-            User savedUser = invocation.getArgument(0);
-            assertEquals(email, savedUser.getEmail());
-            assertEquals(username, savedUser.getUsername());
-            assertTrue(BCrypt.checkpw(password, savedUser.getPassword())); // проверяем хеш
-            return null;
-        }).when(userRepository).save(any(User.class));
+		// Перехватываем user, который передаётся в save, и сразу возвращаем его обратно
+		doAnswer(invocation -> invocation.getArgument(0)).when(userRepository).save(any(User.class));
 
-        assertDoesNotThrow(() -> userService.register(username, email, password));
+		User registeredUser = userService.register(username, email, password);
 
-        verify(userRepository).save(any(User.class));
-    }
+		// Проверяем, что register вернул не null и корректного юзера
+		assertEquals(email, registeredUser.getEmail());
+		assertEquals(username, registeredUser.getUsername());
+		assertTrue(BCrypt.checkpw(password, registeredUser.getPassword()));
 
-    @Test
-    void testRegisterEmailAlreadyExists() {
-        String email = "test@example.com";
-        String username = "testuser";
-        String password = "password123";
+		verify(userRepository).save(any(User.class));
+	}
 
-        // simulate that email already in base
-        when(userRepository.findByEmail(email)).thenReturn(new User());
+	@Test
+	void testRegisterEmailAlreadyExists() {
+		String email = "test@example.com";
+		String username = "testuser";
+		String password = "password123";
 
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> userService.register(username, email, password)
-        );
+		// simulate that email already in base
+		when(userRepository.findByEmail(email)).thenReturn(new User());
 
-        assertEquals("Email already exists", exception.getMessage());
+		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+				() -> userService.register(username, email, password));
 
-        // ensure save не вызывается
-        verify(userRepository, never()).save(any(User.class));
-    }
+		assertEquals("Email already exists", exception.getMessage());
+
+		// ensure save не вызывается
+		verify(userRepository, never()).save(any(User.class));
+	}
 }
