@@ -163,5 +163,42 @@ class UserServiceImplTest {
 
 		verify(userRepository, never()).update(any());
 	}
-	
+
+	@Test
+	void testDeleteUserSuccess() {
+		Long id = 1L;
+		String password = "testPassword";
+		String hPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+
+		User user = new User();
+		user.setId(id);
+		user.setPassword(hPassword);
+
+		when(userRepository.findById(id)).thenReturn(user);
+
+		assertDoesNotThrow(() -> userService.deleteUser(id, password));
+
+		verify(userRepository).delete(user);
+	}
+
+	@Test
+	void testDeleteUserWrongPassword() {
+		Long id = 1L;
+		String correctPassword = "correctPassword";
+		String wrongPassword = "wrong123";
+		String hPassword = BCrypt.hashpw(correctPassword, BCrypt.gensalt());
+
+		User user = new User();
+		user.setId(id);
+		user.setPassword(hPassword);
+
+		when(userRepository.findById(id)).thenReturn(user);
+
+		IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+				() -> userService.deleteUser(id, wrongPassword));
+
+		assertEquals("Wrong password", e.getMessage());
+
+		verify(userRepository, never()).delete(any());
+	}
 }
