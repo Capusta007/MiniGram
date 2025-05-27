@@ -4,3 +4,5 @@
 .settings/
 target/
 src/main/resources/META-INF/persistence.xml
+src/test/resources/META-INF/persistence.xml
+logs/

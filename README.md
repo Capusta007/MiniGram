@@ -30,9 +30,10 @@ git clone https://github.com/Capusta007/MiniGram.git
 cd MiniGram
 ```
 
-### 2. Создай базу данных
+### 2. Создай базы данных
 ```sql
-CREATE DATABASE MiniGramDB;
+CREATE DATABASE MiniGramDB; -- основная база --
+CREATE DATABASE MiniGram_TestDB: -- тетовая база --
 ```
 
 ### 3. Настрой persistence.xml
@@ -47,6 +48,8 @@ cp persistence.xml.example persistence.xml
 <property name="jakarta.persistence.jdbc.user" value="root"/>
 <property name="jakarta.persistence.jdbc.password" value="YOUR_PASSWORD_HERE"/>
 ```
+
+То же самое нужно проделать с persistence.xml в папке src/test/resources/META-INF/
 
 ### 4. Собери и запусти проект
 -Используй свою IDE или собери .war файл
