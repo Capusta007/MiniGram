@@ -1,16 +1,18 @@
 package service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -22,8 +24,8 @@ class UserServiceImplTest {
 	private static UserRepository userRepository;
 	private static UserServiceImpl userService;
 
-	@BeforeAll
-	static void setUp() {
+	@BeforeEach
+	void setUp() {
 		userRepository = mock(UserRepository.class); // create mock
 		userService = new UserServiceImpl(userRepository); // transfer mock
 	}
@@ -121,4 +123,45 @@ class UserServiceImplTest {
 
 		assertEquals("User are not registered", exception.getMessage());
 	}
+
+	@Test
+	void testChangePasswordSuccess() {
+		Long id = 1L;
+		String oldPassword = "old123";
+		String newPassword = "new456";
+		String hashedOld = BCrypt.hashpw(oldPassword, BCrypt.gensalt());
+
+		User user = new User();
+		user.setId(id);
+		user.setPassword(hashedOld);
+
+		when(userRepository.findById(id)).thenReturn(user);
+
+		assertDoesNotThrow(() -> userService.changePassword(id, oldPassword, newPassword));
+
+		verify(userRepository).update(argThat(updatedUser -> BCrypt.checkpw(newPassword, updatedUser.getPassword())));
+
+	}
+
+	@Test
+	void testChangePasswordWrongOldPassword() {
+		Long id = 1L;
+		String correctPassword = "correctPassword";
+		String wrongPassword = "1312ads23";
+		String newPassword = "newPassword";
+		String hashedPassword = BCrypt.hashpw(correctPassword, BCrypt.gensalt());
+
+		User user = new User();
+		user.setId(id);
+		user.setPassword(hashedPassword);
+
+		when(userRepository.findById(id)).thenReturn(user);
+
+		IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+				() -> userService.changePassword(id, wrongPassword, newPassword));
+		assertEquals("Wrong password", e.getMessage());
+
+		verify(userRepository, never()).update(any());
+	}
+	
 }
