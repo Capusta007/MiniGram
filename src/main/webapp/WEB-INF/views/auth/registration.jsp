@@ -1,3 +1,4 @@
+<%@page import="util.RequestAttributeUtil"%>
 <%@ page contentType="text/html;charset=UTF-8" language="java"%>
 <!DOCTYPE html>
 <html lang="ru">
@@ -57,6 +58,10 @@
 								Уже есть аккаунт? <a href="login">Войти</a>
 							</p>
 						</div>
+						<%String error = RequestAttributeUtil.getErrorMessage(request);%>
+						<%if(error != null){ %>
+							<div class = "alert alert-danger" ><%=error%></div>
+						<%} %>
 					</div>
 				</div>
 			</div>
