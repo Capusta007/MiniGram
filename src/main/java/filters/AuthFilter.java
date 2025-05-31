@@ -16,8 +16,12 @@ import util.SessionAttributes;
 @WebFilter("/*")
 public class AuthFilter implements Filter {
 
+	// Pages that allowed to visit while user is not logged in
 	private static final Set<String> ALLOWED_PAGES = Set.of("/MiniGram/login", "/MiniGram/registration", "/MiniGram/");
-
+	
+	// Pages that user can not visit while he is logged in
+	private static final Set<String> EXCLUDED_PAGES = Set.of("/MiniGram/login", "/MiniGram/registration");
+	
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
@@ -33,7 +37,13 @@ public class AuthFilter implements Filter {
 			}
 			return;
 		}
-		
-		chain.doFilter(request, response);
+		else {
+			if (EXCLUDED_PAGES.contains(uri)) {
+				resp.sendRedirect("homepage");
+			} else {
+				chain.doFilter(request, response);
+			}
+			return;
+		}
 	}
 }
