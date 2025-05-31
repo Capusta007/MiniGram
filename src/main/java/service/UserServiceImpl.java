@@ -17,16 +17,17 @@ public class UserServiceImpl implements UserService {
 	}
 
 	/**
-	 * Registers a new user with the provided username, email, and password. The
-	 * password is hashed before saving to the database.
+	 * Registers a new user with the provided username, email, and password.
+	 * The password is hashed before saving to the database.
 	 *
 	 * @param username the username of the new user
 	 * @param email    the email of the new user
 	 * @param password the plain text password to be hashed and stored
-	 * @return the registered {@link User} object if successful, or {@code null} if
-	 *         an error occurred during saving
-	 * @throws IllegalArgumentException if any parameter is null or if a user with
-	 *                                  the same email already exists
+	 * @return the registered {@link User} object
+	 *
+	 * @throws IllegalArgumentException if any parameter is {@code null}, or if a user
+	 *                                  with the same email or username already exists
+	 * @throws RuntimeException if an unexpected error occurs during user saving
 	 */
 	@Override
 	public User register(String username, String email, String password) {
@@ -39,6 +40,11 @@ public class UserServiceImpl implements UserService {
 		if (userRepository.findByEmail(email) != null) {
 			logger.warn("Attempt to register with an existing email address: {}", email);
 			throw new IllegalArgumentException("Email already exists");
+		}
+		
+		if (userRepository.findByUsername(username) != null) {
+			logger.warn("Attempt to register with an existing username: {}", email);
+			throw new IllegalArgumentException("Username already exists");
 		}
 
 		String hPassword = BCrypt.hashpw(password, BCrypt.gensalt());
@@ -53,7 +59,7 @@ public class UserServiceImpl implements UserService {
 			return user;
 		} catch (Exception e) {
 			logger.error("Error while saving user {} in database", email);
-			return null;
+			throw new RuntimeException("Failed to register user", e);
 		}
 	}
 
