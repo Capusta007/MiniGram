@@ -16,7 +16,7 @@ import util.SessionAttributes;
 @WebFilter("/*")
 public class AuthFilter implements Filter {
 
-	private static final Set<String> ALLOWED_PAGES = Set.of("/MiniGram/login", "/MiniGram/registration");
+	private static final Set<String> ALLOWED_PAGES = Set.of("/MiniGram/login", "/MiniGram/registration", "/MiniGram/");
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -25,7 +25,6 @@ public class AuthFilter implements Filter {
 		HttpServletResponse resp = (HttpServletResponse) response;
 
 		String uri = req.getRequestURI();
-		System.out.println(uri);
 		if (req.getSession().getAttribute(SessionAttributes.USER_ID) == null) {
 			if (ALLOWED_PAGES.contains(uri)) {
 				chain.doFilter(request, response);
